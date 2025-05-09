@@ -36,7 +36,7 @@ router.post("/",
 
 			const token = validations.jwtSign({ email: userEmail });
 			await Invitation.findOneAndRemove({ email: userEmail });
-			await new Invitation({
+			const invitation = await new Invitation({
 				email: userEmail,
 				token,
 			}).save();

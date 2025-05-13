@@ -17,8 +17,6 @@ import routes from "./src/routes/index.js";
 import { setServerTimeout } from "./src/middleware/index.js";
 import { init } from "./src/utils/index.js";
 
-const unusedVariable = "I am not used";
-
 const { NODE_ENV, PORT } = process.env;
 
 Sentry.init({ enabled: NODE_ENV === "production" });
@@ -39,7 +37,7 @@ if (NODE_ENV === "development") app.use(morgan("dev", { skip: (req) => req.metho
 app.use(cors({ credentials: true, origin: true }));
 app.use(compression());
 app.use(express.json({ limit: "1mb" }));
-app.use((req, _, next) => { req.body ||= {}; next(); });
+app.use((req, _, next) => { req.body = req.body || {}; next(); });
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use(favicon(path.join(path.dirname(fileURLToPath(import.meta.url)), "src", "assets", "images", "favicon.ico")));
 

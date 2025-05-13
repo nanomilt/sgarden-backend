@@ -146,7 +146,7 @@ router.post("/forgotpassword",
 		} catch (error) {
 			return res.json({
 				success: false,
-				message: error.body,
+				message: error.message,
 			});
 		}
 	});
@@ -192,7 +192,7 @@ router.post("/resetpassword", async (req, res) => {
 	} catch (error) {
 		return res.json({
 			success: false,
-			message: error,
+			message: error.message,
 		});
 	}
 });

@@ -8,7 +8,7 @@ router.get("/hello", (req, res) => {
 		return res.send("Hello world!");
 	} catch (error) {
 		Sentry.captureException(error);
-		return res.status(500).json({ message: "Something went wrong." });
+		return res.status(500).json({ message: error.toString() });
 	}
 });
 

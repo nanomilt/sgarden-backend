@@ -25,7 +25,7 @@ router.use("/data/", dataRoutes);
 
 router.get("/test/", (req, res) => {
 	const { user } = res.locals;
-	console.log(user);
+	console.log(JSON.stringify(user));
 	return res.json({ success: true });
 });
 

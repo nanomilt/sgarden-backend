@@ -1,7 +1,7 @@
 import express from "express";
 import Sentry from "@sentry/node";
 
-import { email, validations } from "../utils/index.js";
+import { validations } from "../utils/index.js";
 import { User, Invitation } from "../models/index.js";
 
 const router = express.Router({ mergeParams: true });
@@ -41,7 +41,7 @@ router.post("/",
 				token,
 			}).save();
 
-			await email.inviteUser(userEmail, token);
+			await validations.inviteUser(userEmail, token);
 			return res.json({
 				success: true,
 				message: "Invitation e-mail sent",

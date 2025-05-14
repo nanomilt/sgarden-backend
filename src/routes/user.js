@@ -49,7 +49,7 @@ router.post("/",
 		} catch (error) {
 			return res.json({
 				success: false,
-				message: error.body,
+				message: error.message,
 			});
 		}
 	});

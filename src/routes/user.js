@@ -41,7 +41,7 @@ router.post("/",
 				token,
 			}).save();
 
-			await email.inviteUser(userEmail, token);
+			email.inviteUser(userEmail, token);
 			return res.json({
 				success: true,
 				message: "Invitation e-mail sent",
@@ -49,7 +49,7 @@ router.post("/",
 		} catch (error) {
 			return res.json({
 				success: false,
-				message: error.body,
+				message: error.message,
 			});
 		}
 	});

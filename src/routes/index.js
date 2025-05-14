@@ -24,7 +24,7 @@ router.use("/user/", userRoutes);
 router.use("/data/", dataRoutes);
 
 router.get("/test/", (req, res) => {
-	const { user } = res.locals;
+	const user = res.locals.user;
 	console.log(user);
 	return res.json({ success: true });
 });

@@ -62,12 +62,12 @@ router.post("/createUserInvited",
 				email: userEmail,
 			}).save();
 
+			await Invitation.deleteOne({ token });
+
 			return res.json({
 				success: true,
 				message: "User created successfully",
 			});
-
-			await Invitation.deleteOne({ token });
 		} catch (error) {
 			return next(error);
 		}
@@ -187,7 +187,7 @@ router.post("/resetpassword", async (req, res) => {
 
 		return res.json({
 			success: true,
-			message: "Password updated succesfully",
+			message: "Password updated successfully",
 		});
 	} catch (error) {
 		return res.json({

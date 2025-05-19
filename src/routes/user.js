@@ -26,8 +26,8 @@ router.post("/",
 		try {
 			const { email: userEmail } = req.body;
 
-			const user = await User.findOne({ email: userEmail });
-			if (user) {
+			const existingUser = await User.findOne({ email: userEmail });
+			if (existingUser) {
 				return res.json({
 					success: false,
 					message: "A user with this email already exists",
@@ -36,10 +36,11 @@ router.post("/",
 
 			const token = validations.jwtSign({ email: userEmail });
 			await Invitation.findOneAndRemove({ email: userEmail });
-			await new Invitation({
+			const newInvitation = new Invitation({
 				email: userEmail,
 				token,
-			}).save();
+			});
+			await newInvitation.save();
 
 			await email.inviteUser(userEmail, token);
 			return res.json({
@@ -49,7 +50,7 @@ router.post("/",
 		} catch (error) {
 			return res.json({
 				success: false,
-				message: error.body,
+				message: error.message,
 			});
 		}
 	});
@@ -57,8 +58,8 @@ router.post("/",
 router.post("/delete", async (req, res) => {
 	try {
 		const { id } = req.body;
-		const user = await User.findByIdAndDelete(id);
-		if (user) {
+		const deletedUser = await User.findByIdAndDelete(id);
+		if (deletedUser) {
 			return res.json({ success: true });
 		}
 
@@ -72,8 +73,8 @@ router.post("/delete", async (req, res) => {
 router.post("/role", async (req, res) => {
 	try {
 		const { id, role } = req.body;
-		const user = await User.findByIdAndUpdate(id, { role });
-		if (user) {
+		const updatedUser = await User.findByIdAndUpdate(id, { role }, { new: true });
+		if (updatedUser) {
 			return res.json({ success: true });
 		}
 

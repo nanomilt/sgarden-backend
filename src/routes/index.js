@@ -25,8 +25,8 @@ router.use("/data/", dataRoutes);
 
 router.get("/test/", (req, res) => {
 	const { user } = res.locals;
-	console.log(user);
-	return res.json({ success: true });
+	// Removed unused variable declaration
+	return res.json({ success: true, user });
 });
 
 export default router;

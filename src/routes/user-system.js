@@ -35,7 +35,7 @@ router.post("/createUser",
 
 
 router.post("/createUserInvited",
-	(req,res,next) => validations.validate(req, res, next, "register"),
+	(req, res, next) => validations.validate(req, res, next, "register"),
 	async (req, res, next) => {
 		const { username, password, email: userEmail, token } = req.body;
 		try {
@@ -62,12 +62,12 @@ router.post("/createUserInvited",
 				email: userEmail,
 			}).save();
 
+			await Invitation.deleteOne({ token });
+
 			return res.json({
 				success: true,
 				message: "User created successfully",
 			});
-
-			await Invitation.deleteOne({ token });
 		} catch (error) {
 			return next(error);
 		}

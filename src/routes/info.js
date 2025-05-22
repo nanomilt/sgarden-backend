@@ -3,7 +3,7 @@ import express from 'express';
 
 const router = express.Router({ mergeParams: true });
 
-router.get('/hello', (_, res) => {
+router.get('/hello', (req, res) => {
   try {
     return res.send('Hello world!');
   } catch (error) {

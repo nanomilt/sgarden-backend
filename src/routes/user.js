@@ -36,11 +36,10 @@ router.post('/',
 
       const token = validations.jwtSign({ email: userEmail });
       await Invitation.findOneAndRemove({ email: userEmail });
-      const invitation = new Invitation({
+      const invitation = await new Invitation({
         email: userEmail,
         token,
-      });
-      await invitation.save();
+      }).save();
 
       await email.inviteUser(userEmail, token);
       return res.json({
@@ -50,7 +49,7 @@ router.post('/',
     } catch (error) {
       return res.json({
         success: false,
-        message: error.body,
+        message: error.message,
       });
     }
   });

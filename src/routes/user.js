@@ -6,11 +6,11 @@ import { User, Invitation } from '../models/index.js';
 
 const router = express.Router({ mergeParams: true });
 
-router.get('/decode/', (_, res) => res.json(res.locals.user));
+router.get('/decode/', (req, res) => res.json(res.locals.user));
 
-router.get('/attempt-auth/', (_, res) => res.json({ ok: true }));
+router.get('/attempt-auth/', (req, res) => res.json({ ok: true }));
 
-router.get('/', async (_, res) => {
+router.get('/', async (req, res) => {
   try {
     const users = await User.find();
     return res.json({ success: true, users });
@@ -36,10 +36,11 @@ router.post('/',
 
       const token = validations.jwtSign({ email: userEmail });
       await Invitation.findOneAndRemove({ email: userEmail });
-      await new Invitation({
+      const invitation = new Invitation({
         email: userEmail,
         token,
-      }).save();
+      });
+      await invitation.save();
 
       await email.inviteUser(userEmail, token);
       return res.json({

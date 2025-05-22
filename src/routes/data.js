@@ -5,7 +5,7 @@ const router = express.Router({ mergeParams: true });
 
 const generateRandomData = (min = 0, max = 10) => Math.random() * (max - min) + min;
 
-router.get('/', async (_, res) => {
+router.get('/', async (req, res) => {
   try {
     const localFoodCropProduction = {
       March: Array.from({ length: 100 }, () => generateRandomData(0, 10)),

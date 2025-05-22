@@ -33,11 +33,11 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 app.use(setServerTimeout(2 * 60 * 1000));
-if (NODE_ENV === 'development') {app.use(morgan('dev', { skip: (_) => _.method === 'OPTIONS' }));}
+if (NODE_ENV === 'development') {app.use(morgan('dev', { skip: (req) => req.method === 'OPTIONS' }));}
 app.use(cors({ credentials: true, origin: true }));
 app.use(compression());
 app.use(express.json({ limit: '1mb' }));
-app.use((_, __, next) => { _.body ||= {}; next(); });
+app.use((req, _, next) => { req.body ||= {}; next(); });
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use(favicon(path.join(path.dirname(fileURLToPath(import.meta.url)), 'src', 'assets', 'images', 'favicon.ico')));
 

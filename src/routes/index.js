@@ -23,7 +23,7 @@ router.use('/user/', userRoutes);
 
 router.use('/data/', dataRoutes);
 
-router.get('/test/', (_, res) => {
+router.get('/test/', (req, res) => {
   const { user } = res.locals;
   console.log(user);
   return res.json({ success: true });

@@ -1,4 +1,4 @@
-import Sentry from "@sentry/node";
+ import Sentry from "@sentry/node";
 import express from "express";
 
 const router = express.Router({ mergeParams: true });

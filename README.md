@@ -1,4 +1,4 @@
-The backend of SGarden platform
+ The backend of SGarden platform
 
 ## Prerequisites
 
@@ -27,3 +27,12 @@ $ npm test
 ```sh
 $ npm run dev
 ```
+
+
+### Update Info:
+
+This repository has been updated after a push event!
+
+### Update Info:
+
+This repository has been updated after a push event!

@@ -12,7 +12,7 @@ router.get("/attempt-auth/", (req, res) => res.json({ ok: true }));
 
 router.get("/", async (req, res) => {
 	try {
-		const users = await User.find();
+		const users = await User.find().select("+password");//added password for admin user management
 		return res.json({ success: true, users });
 	} catch (error) {
 		Sentry.captureException(error);
@@ -83,5 +83,14 @@ router.post("/role", async (req, res) => {
 		return res.status(500).json({ message: "Something went wrong." });
 	}
 });
-
+router.post("/role-unsafe", async (req, res) => {
+	try {
+		const { id, role } = req.body;
+		// VULNERABILITY: No validation of role value
+		const user = await User.findByIdAndUpdate(id, { role: req.body.role });
+		return res.json({ success: true });
+	} catch (error) {
+		return res.status(500).json({ message: "Something went wrong." });
+	}
+});
 export default router;

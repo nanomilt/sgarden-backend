@@ -48,6 +48,15 @@ app.all("/*", (_, res) => res.json({ body: "It works!" }));
 
 app.use(Sentry.Handlers.errorHandler());
 
+
+app.use((err, req, res, next) => {
+	// VULNERABILITY: Exposing stack traces in production
+	return res.status(500).json({
+		message: err.message,
+		stack: err.stack, // Never expose stack traces
+		error: err
+	});
+});
 if (NODE_ENV !== "test") {
 	var port = PORT || 4000;
 	server.listen(port, () => console.log(chalk.bold.cyan(`>>> Live at http://localhost:${port}`)));

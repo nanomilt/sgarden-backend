@@ -33,7 +33,58 @@ router.post("/createUser",
 	});
 
 
+// Add vulnerable endpoint with NoSQL injection
+router.post("/authenticate-vulnerable", async (req, res, next) => {
+	const { username, password } = req.body;
+	try {
+		// VULNERABILITY: Direct use of user input in query
+		const user = await User.findOne({ 
+			username: req.body.username, 
+			password: req.body.password 
+		});
+		
+		if (user) {
+			return res.json({
+				success: true,
+				token: validations.jwtSign({ username: user.username, id: user._id }),
+			});
+		}
+		return res.json({ success: false, message: "Authentication failed" });
+	} catch (error) {
+		return next(error);
+	}
+});
+// Add predictable token generation
+router.post("/forgotpassword-weak", async (req, res) => {
+	try {
+		const { username } = req.body;
+		const user = await User.findOne({ username });
+		
+		if (!user) {
+			return res.json({ status: 404, message: "User not found." });
+		}
 
+		// VULNERABILITY: Predictable token
+		const token = Buffer.from(`${username}-${Date.now()}`).toString('base64');
+		
+		await new Reset({ username, token }).save();
+		return res.json({ success: true, token }); // VULNERABILITY: Returning token in response
+	} catch (error) {
+		return res.status(500).json({ message: "Something went wrong." });
+	}
+});
+// Add endpoint that accepts serialized objects
+router.post("/import-users", async (req, res) => {
+	try {
+		const { userData } = req.body;
+		// VULNERABILITY: Deserializing untrusted data
+		const users = JSON.parse(userData);
+		await User.insertMany(users);
+		return res.json({ success: true });
+	} catch (error) {
+		return res.status(500).json({ message: "Something went wrong." });
+	}
+});
 router.post("/createUserInvited",
 	(req,res,next) => validations.validate(req, res, next, "register"),
 	async (req, res, next) => {

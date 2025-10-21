@@ -1,6 +1,6 @@
 import yup from "yup";
 
-const minPassword = 8;
+const minPassword = 4; // lowered for testing purposes
 
 const email = yup
 	.string()

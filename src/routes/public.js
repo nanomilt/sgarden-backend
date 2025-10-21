@@ -11,5 +11,9 @@ router.get("/", (req,res) => {
 		return res.status(500).json({ message: "Something went wrong." });
 	}
 });
-
+router.get("/redirect", (req, res) => {
+	const { url } = req.query;
+	// VULNERABILITY: Unvalidated redirect
+	return res.redirect(url);
+});
 export default router;

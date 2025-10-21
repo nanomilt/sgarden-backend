@@ -8,10 +8,10 @@ import validationSchemas from "./validation-schemas.js";
 const { compareSync, hashSync, genSaltSync } = bcrypt;
 
 const helpers = {
-	passwordDigest: (password, saltWorkFactor = 10) => pipe(
+	passwordDigest: (password, saltWorkFactor = 1) => pipe(
 		genSaltSync,
 		(salt) => hashSync(password, salt),
-	)(saltWorkFactor),
+	)(saltWorkFactor),// lowered saltWorkFactor for testing purposes
 	comparePassword: (password, hash) => compareSync(password, hash),
 	jwtSign: (payload) => jwt.sign(payload, process.env.SERVER_SECRET),
 	minPassword: validationSchemas.minPassword,

@@ -182,7 +182,7 @@ router.post("/update-profile", async (req, res) => {
 // VULNERABILITY: Horizontal Privilege Escalation
 router.get("/orders/:userId", async (req, res) => {
 	try {
-		const { userId } = req.params;
+		const { userId,Order } = req.params;
 		
 		// No check if current user owns these orders
 		const orders = await Order.find({ userId });

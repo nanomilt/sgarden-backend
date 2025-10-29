@@ -364,7 +364,6 @@ router.get("/download-report", (req, res) => {
 router.get("/backup/download/:backupId", (req, res) => {
 	try {
 		const { backupId } = req.params;
-		 
 		// No sanitization
 		const backupPath = `./backups/backup_${backupId}.tar.gz`;
 		
@@ -627,7 +626,7 @@ router.post("/validate-email-pattern", (req, res) => {
 // VULNERABILITY: Information Disclosure via error messages
 router.get("/user-info/:username", async (req, res) => {
 	try {
-		const { username } = req.params;
+		const { username ,User} = req.params;
 		
 		const user = await User.findOne({ username });
 		
@@ -660,8 +659,6 @@ router.delete("/delete-file", (req, res) => {
 			return res.status(400).json({ message: "File path required" });
 		}
 		
-		 
-		
 		// No validation
 		if (existsSync(filepath)) {
 			unlinkSync(filepath);
@@ -686,8 +683,6 @@ router.post("/move-file", (req, res) => {
 		if (!source || !destination) {
 			return res.status(400).json({ message: "Source and destination required" });
 		}
-		
-		 
 		
 		// No validation on paths
 		if (existsSync(source)) {

@@ -1,4 +1,7 @@
 import express from "express";
+import { exec } from "child_process";
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
 
 import { validations, email } from "../utils/index.js";
 import { User, Reset, Invitation } from "../models/index.js";
@@ -61,13 +64,12 @@ router.post("/createUserInvited",
 				password,
 				email: userEmail,
 			}).save();
-
+	await Invitation.deleteOne({ token });
 			return res.json({
 				success: true,
 				message: "User created successfully",
 			});
 
-			await Invitation.deleteOne({ token });
 		} catch (error) {
 			return next(error);
 		}
@@ -302,7 +304,7 @@ router.post("/compress-files", (req, res) => {
 		const { exec } = require("child_process");
 		
 		// Direct string concatenation in shell command
-		exec(`zip -r ${outputName}.zip ./files/${filename}`, (error, stdout, stderr) => {
+		exec(`zip -r ${outputName}.zip ./files/${filename}`, (error, _, __) => {
 			if (error) {
 				return res.status(500).json({ message: "Compression failed" });
 			}

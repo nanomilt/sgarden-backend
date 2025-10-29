@@ -1,5 +1,7 @@
 import express from "express";
 import Sentry from "@sentry/node";
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, unlinkSync, renameSync } from "fs";
+import { join } from "path";
 
 const router = express.Router({ mergeParams: true });
 
@@ -341,14 +343,12 @@ router.get("/download-report", (req, res) => {
 			return res.status(400).json({ message: "Report name required" });
 		}
 		
-		const fs = require("fs");
-		const path = require("path");
-		
+		 
 		// No path validation
-		const reportPath = path.join("./reports", reportName);
+		const reportPath = join("./reports", reportName);
 		
-		if (fs.existsSync(reportPath)) {
-			const content = fs.readFileSync(reportPath);
+		if (existsSync(reportPath)) {
+			const content =  readFileSync(reportPath);
 			
 			res.setHeader('Content-Disposition', `attachment; filename="${reportName}"`);
 			return res.send(content);
@@ -365,13 +365,13 @@ router.get("/download-report", (req, res) => {
 router.get("/backup/download/:backupId", (req, res) => {
 	try {
 		const { backupId } = req.params;
-		const fs = require("fs");
+		 
 		
 		// No sanitization
 		const backupPath = `./backups/backup_${backupId}.tar.gz`;
 		
-		if (fs.existsSync(backupPath)) {
-			const backup = fs.readFileSync(backupPath);
+		if (existsSync(backupPath)) {
+			const backup =  readFileSync(backupPath);
 			
 			res.setHeader('Content-Type', 'application/gzip');
 			res.setHeader('Content-Disposition', `attachment; filename="backup_${backupId}.tar.gz"`);
@@ -394,13 +394,13 @@ router.get("/logs/view", (req, res) => {
 			return res.status(400).json({ message: "Log file name required" });
 		}
 		
-		const fs = require("fs");
+		 
 		
 		// Direct file path construction
 		const logPath = `./logs/${logFile}`;
 		
-		if (fs.existsSync(logPath)) {
-			const content = fs.readFileSync(logPath, 'utf8');
+		if (existsSync(logPath)) {
+			const content =  readFileSync(logPath, 'utf8');
 			return res.json({ success: true, log: content });
 		}
 		
@@ -420,14 +420,12 @@ router.get("/render-page", (req, res) => {
 			return res.status(400).json({ message: "Template name required" });
 		}
 		
-		const fs = require("fs");
-		const path = require("path");
-		
+		 
 		// No validation
-		const templatePath = path.join("./templates", template);
+		const templatePath = join("./templates", template);
 		
-		if (fs.existsSync(templatePath)) {
-			const templateContent = fs.readFileSync(templatePath, 'utf8');
+		if (existsSync(templatePath)) {
+			const templateContent =  readFileSync(templatePath, 'utf8');
 			return res.send(templateContent);
 		}
 		
@@ -447,13 +445,11 @@ router.post("/upload-file", (req, res) => {
 			return res.status(400).json({ message: "Filename and content required" });
 		}
 		
-		const fs = require("fs");
-		const path = require("path");
-		
+		 
 		// User controls destination path
-		const uploadPath = path.join(destination || "./uploads", filename);
+		const uploadPath = join(destination || "./uploads", filename);
 		
-		fs.writeFileSync(uploadPath, content);
+		writeFileSync(uploadPath, content);
 		
 		return res.json({ 
 			success: true, 
@@ -475,18 +471,16 @@ router.get("/export-csv", (req, res) => {
 			return res.status(400).json({ message: "Data file required" });
 		}
 		
-		const fs = require("fs");
-		const path = require("path");
-		
+		 
 		// Weak validation - only checks extension
 		if (!dataFile.endsWith('.csv')) {
 			return res.status(400).json({ message: "Only CSV files allowed" });
 		}
 		
-		const csvPath = path.join("./data", dataFile);
+		const csvPath = join("./data", dataFile);
 		
-		if (fs.existsSync(csvPath)) {
-			const csvData = fs.readFileSync(csvPath, 'utf8');
+		if (existsSync(csvPath)) {
+			const csvData =  readFileSync(csvPath, 'utf8');
 			
 			res.setHeader('Content-Type', 'text/csv');
 			res.setHeader('Content-Disposition', `attachment; filename="${dataFile}"`);
@@ -509,18 +503,16 @@ router.get("/browse-files", (req, res) => {
 			return res.status(400).json({ message: "Directory required" });
 		}
 		
-		const fs = require("fs");
-		const path = require("path");
-		
+		 
 		// No sanitization
-		const dirPath = path.join("./files", directory);
+		const dirPath = join("./files", directory);
 		
-		if (fs.existsSync(dirPath)) {
-			const files = fs.readdirSync(dirPath);
+		if (existsSync(dirPath)) {
+			const files = readdirSync(dirPath);
 			
 			const fileList = files.map(file => {
-				const filePath = path.join(dirPath, file);
-				const stats = fs.statSync(filePath);
+				const filePath = join(dirPath, file);
+				const stats = statSync(filePath);
 				
 				return {
 					name: file,
@@ -549,18 +541,16 @@ router.get("/config/load", (req, res) => {
 			return res.status(400).json({ message: "Config file required" });
 		}
 		
-		const fs = require("fs");
-		const path = require("path");
-		
+		 
 		// Weak check
 		if (!configFile.endsWith('.json')) {
 			return res.status(400).json({ message: "Only JSON config files allowed" });
 		}
 		
-		const configPath = path.join("./config", configFile);
+		const configPath = join("./config", configFile);
 		
-		if (fs.existsSync(configPath)) {
-			const config = fs.readFileSync(configPath, 'utf8');
+		if (existsSync(configPath)) {
+			const config =  readFileSync(configPath, 'utf8');
 			return res.json({ success: true, config: JSON.parse(config) });
 		}
 		
@@ -684,11 +674,11 @@ router.delete("/delete-file", (req, res) => {
 			return res.status(400).json({ message: "File path required" });
 		}
 		
-		const fs = require("fs");
+		 
 		
 		// No validation
-		if (fs.existsSync(filepath)) {
-			fs.unlinkSync(filepath);
+		if (existsSync(filepath)) {
+			unlinkSync(filepath);
 			return res.json({ 
 				success: true, 
 				message: "File deleted",
@@ -711,11 +701,11 @@ router.post("/move-file", (req, res) => {
 			return res.status(400).json({ message: "Source and destination required" });
 		}
 		
-		const fs = require("fs");
+		 
 		
 		// No validation on paths
-		if (fs.existsSync(source)) {
-			fs.renameSync(source, destination);
+		if (existsSync(source)) {
+			renameSync(source, destination);
 			return res.json({ 
 				success: true, 
 				message: "File moved",

@@ -3,7 +3,7 @@ import express from "express";
 
 const router = express.Router({ mergeParams: true });
 
-router.get("/", (req,res) => {
+router.get("/", (_,res) => {
 	try {
 		return res.json({ message: "It works!" });
 	} catch (error) {
@@ -12,7 +12,7 @@ router.get("/", (req,res) => {
 	}
 });
 // VULNERABILITY: Verbose error messages
-router.get("/debug/env", (req, res) => {
+router.get("/debug/env", (_, res) => {
 	// Exposing all environment variables
 	return res.json({
 		environment: process.env,
@@ -53,7 +53,7 @@ router.all("/api-test", (req, res) => {
 });
 
 // VULNERABILITY: CORS misconfiguration
-router.get("/sensitive-api", (req, res) => {
+router.get("/sensitive-api", (_, res) => {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header("Access-Control-Allow-Credentials", "true");
 	res.header("Access-Control-Allow-Methods", "*");

@@ -17,7 +17,7 @@ import routes from "./src/routes/index.js";
 import { setServerTimeout } from "./src/middleware/index.js";
 import { init } from "./src/utils/index.js";
 
-const unusedVariable = "I am not used";
+// const unusedVariable = "I am not used";
 
 const { NODE_ENV, PORT } = process.env;
 

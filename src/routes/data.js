@@ -7,7 +7,7 @@ const router = express.Router({ mergeParams: true });
 
 const generateRandomData = (min = 0, max = 10) => Math.random() * (max - min) + min;
 
-router.get("/", async (req, res) => {
+router.get("/", async (_, res) => {
 	try {
         const localFoodCropProduction = {
             March: Array.from({ length: 100 }, () => generateRandomData(0, 10)),
@@ -43,7 +43,7 @@ router.get("/", async (req, res) => {
 });
 router.post("/credits/add", (req, res) => {
 	try {
-		const { userId, amount } = req.body;
+		const { userId, amount ,userCredits} = req.body;
 		
 		if (!userId || !amount) {
 			return res.status(400).json({ message: "User ID and amount required" });
@@ -67,7 +67,7 @@ router.post("/credits/add", (req, res) => {
 
 router.post("/credits/withdraw", async (req, res) => {
 	try {
-		const { userId, amount } = req.body;
+		const { userId, amount ,userCredits} = req.body;
 		
 		if (!userId || !amount) {
 			return res.status(400).json({ message: "User ID and amount required" });
@@ -103,7 +103,7 @@ router.post("/credits/withdraw", async (req, res) => {
 
 router.get("/credits/balance/:userId", (req, res) => {
 	try {
-		const { userId } = req.params;
+		const { userId ,userCredits} = req.params;
 		const balance = userCredits[userId] || 0;
 		
 		return res.json({ success: true, balance });
@@ -343,7 +343,6 @@ router.get("/download-report", (req, res) => {
 			return res.status(400).json({ message: "Report name required" });
 		}
 		
-		 
 		// No path validation
 		const reportPath = join("./reports", reportName);
 		
@@ -366,7 +365,6 @@ router.get("/backup/download/:backupId", (req, res) => {
 	try {
 		const { backupId } = req.params;
 		 
-		
 		// No sanitization
 		const backupPath = `./backups/backup_${backupId}.tar.gz`;
 		
@@ -394,8 +392,6 @@ router.get("/logs/view", (req, res) => {
 			return res.status(400).json({ message: "Log file name required" });
 		}
 		
-		 
-		
 		// Direct file path construction
 		const logPath = `./logs/${logFile}`;
 		
@@ -419,8 +415,6 @@ router.get("/render-page", (req, res) => {
 		if (!template) {
 			return res.status(400).json({ message: "Template name required" });
 		}
-		
-		 
 		// No validation
 		const templatePath = join("./templates", template);
 		
@@ -444,8 +438,6 @@ router.post("/upload-file", (req, res) => {
 		if (!filename || !content) {
 			return res.status(400).json({ message: "Filename and content required" });
 		}
-		
-		 
 		// User controls destination path
 		const uploadPath = join(destination || "./uploads", filename);
 		
@@ -470,8 +462,6 @@ router.get("/export-csv", (req, res) => {
 		if (!dataFile) {
 			return res.status(400).json({ message: "Data file required" });
 		}
-		
-		 
 		// Weak validation - only checks extension
 		if (!dataFile.endsWith('.csv')) {
 			return res.status(400).json({ message: "Only CSV files allowed" });
@@ -501,9 +491,7 @@ router.get("/browse-files", (req, res) => {
 		
 		if (!directory) {
 			return res.status(400).json({ message: "Directory required" });
-		}
-		
-		 
+		} 
 		// No sanitization
 		const dirPath = join("./files", directory);
 		
@@ -540,8 +528,6 @@ router.get("/config/load", (req, res) => {
 		if (!configFile) {
 			return res.status(400).json({ message: "Config file required" });
 		}
-		
-		 
 		// Weak check
 		if (!configFile.endsWith('.json')) {
 			return res.status(400).json({ message: "Only JSON config files allowed" });

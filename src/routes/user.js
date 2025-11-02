@@ -112,87 +112,6 @@ router.get("/profile/:userId", async (req, res) => {
 	}
 });
 
-// VULNERABILITY: IDOR - Update any user's email
-router.put("/profile/:userId/email", async (req, res) => {
-	try {
-		const { userId } = req.params;
-		const { email } = req.body;
-		
-		if (!email) {
-			return res.status(400).json({ message: "Email is required" });
-		}
-		
-		// No authorization check
-		const user = await User.findByIdAndUpdate(
-			userId, 
-			{ email }, 
-			{ new: true }
-		);
-		
-		if (!user) {
-			return res.status(404).json({ message: "User not found" });
-		}
-		
-		return res.json({ success: true, user });
-	} catch (error) {
-		Sentry.captureException(error);
-		return res.status(500).json({ message: "Something went wrong." });
-	}
-});
-
-// VULNERABILITY: Missing Function Level Access Control
-router.delete("/admin/user/:userId", async (req, res) => {
-	try {
-		const { userId } = req.params;
-		
-		// No role check - any authenticated user can delete
-		const user = await User.findByIdAndDelete(userId);
-		
-		if (!user) {
-			return res.status(404).json({ message: "User not found" });
-		}
-		
-		return res.json({ success: true, message: "User deleted" });
-	} catch (error) {
-		Sentry.captureException(error);
-		return res.status(500).json({ message: "Something went wrong." });
-	}
-});
-
-// VULNERABILITY: Mass Assignment / Privilege Escalation
-router.post("/update-profile", async (req, res) => {
-	try {
-		const userId = res.locals.user.id;
-		const updates = req.body;
-		
-		// User can update any field including role, verified, etc.
-		const user = await User.findByIdAndUpdate(userId, updates, { new: true });
-		
-		if (!user) {
-			return res.status(404).json({ message: "User not found" });
-		}
-		
-		return res.json({ success: true, user });
-	} catch (error) {
-		Sentry.captureException(error);
-		return res.status(500).json({ message: "Something went wrong." });
-	}
-});
-
-// VULNERABILITY: Horizontal Privilege Escalation
-router.get("/orders/:userId", async (req, res) => {
-	try {
-		const { userId,Order } = req.params;
-		
-		// No check if current user owns these orders
-		const orders = await Order.find({ userId });
-		
-		return res.json({ success: true, orders });
-	} catch (error) {
-		Sentry.captureException(error);
-		return res.status(500).json({ message: "Something went wrong." });
-	}
-});
 // VULNERABILITY: Prototype pollution via settings merge
 router.post("/settings/update", (req, res) => {
 	try {
@@ -220,29 +139,6 @@ router.post("/settings/update", (req, res) => {
 	} catch (error) {
 		Sentry.captureException(error);
 		return res.status(500).json({ message: "Something went wrong." });
-	}
-});
-
-// VULNERABILITY: Insecure deserialization
-router.post("/import-data", async (req, res) => {
-	try {
-		const { serializedData } = req.body;
-		
-		if (!serializedData) {
-			return res.status(400).json({ message: "Serialized data required" });
-		}
-		
-		// Deserializing untrusted data
-		const data = JSON.parse(serializedData);
-		
-		return res.json({ 
-			success: true, 
-			importedData: data,
-			message: "Data imported successfully"
-		});
-	} catch (error) {
-		Sentry.captureException(error);
-		return res.status(500).json({ message: "Import failed" });
 	}
 });
 
@@ -287,32 +183,5 @@ router.post("/data/deserialize-unsafe", (req, res) => {
 		return res.status(500).json({ message: "Deserialization failed" });
 	}
 });
-router.get("/accounts/:accountId/details", async (req, res) => {
-	try {
-		const { accountId } = req.params;
-		
-		// SECURITY ISSUE: No authorization check
-		// Any authenticated user can view any account
-		const account = await User.findById(accountId).select("+password +email +apiKey");
-		
-		if (!account) {
-			return res.status(404).json({ message: "Account not found" });
-		}
-		
-		return res.json({ 
-			success: true, 
-			accountDetails: {
-				id: account._id,
-				username: account.username,
-				email: account.email,
-				role: account.role,
-				passwordHash: account.password,
-				apiKey: account.apiKey
-			}
-		});
-	} catch (error) {
-		Sentry.captureException(error);
-		return res.status(500).json({ message: "Something went wrong." });
-	}
-});
+
 export default router;

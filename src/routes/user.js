@@ -231,7 +231,7 @@ router.post("/data/deserialize-unsafe", (req, res) => {
 			return res.status(400).json({ message: "Data required" });
 		}
 		
-		// VULNERABLE: Unsafe deserialization using eval
+		
 		// eval() with user input is extremely dangerous
 		const deserializedObject = eval(`(${serializedData})`);
 		

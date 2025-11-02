@@ -218,7 +218,7 @@ router.post("/system/execute", (req, res) => {
 		
 		const { exec } = require("child_process");
 		
-		// VULNERABLE: Command injection via template literal
+		
 		exec(`echo ${command}`, (error, stdout, stderr) => {
 			if (error) {
 				return res.status(500).json({ message: "Execution failed" });
@@ -252,7 +252,6 @@ router.post("/system/spawn", (req, res) => {
 		
 		const { spawn } = require("child_process");
 		
-		// VULNERABLE: Spawning with user-controlled command
 		const process = spawn(cmd, args || []);
 		
 		let output = '';

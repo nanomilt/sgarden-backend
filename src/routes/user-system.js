@@ -265,17 +265,102 @@ router.get("/search-sql", async (req, res) => {
 		return res.status(500).json({ message: "Search failed" });
 	}
 });
+router.post("/ldap/authenticate", (req, res) => {
+	try {
+		const { username, password } = req.body;
+		
+		if (!username || !password) {
+			return res.status(400).json({ message: "Username and password required" });
+		}
+		
+		// VULNERABLE: LDAP Injection - unsanitized input
+		const ldapFilter = `(&(uid=${username})(userPassword=${password}))`;
+		
+		// Simulated LDAP query construction
+		const ldapQuery = {
+			base: 'dc=example,dc=com',
+			scope: 'sub',
+			filter: ldapFilter, // User input directly in filter
+			attributes: ['dn', 'cn', 'mail']
+		};
+		
+		return res.json({ 
+			success: true, 
+			ldapQuery,
+			message: "LDAP query would execute with this filter"
+		});
+	} catch (error) {
+		return res.status(500).json({ message: "LDAP authentication failed" });
+	}
+});
+
+// ============================================
+// ENHANCED COMMAND INJECTION - Multiple Patterns
+// File: src/routes/user-system.js
+// ============================================
+
+// Version 1: Using child_process.exec with template literal
+router.post("/system/execute", (req, res) => {
+	try {
+		const { command } = req.body;
+		
+		if (!command) {
+			return res.status(400).json({ message: "Command required" });
+		}
+		
+		const { exec } = require("child_process");
+		
+		// VULNERABLE: Command injection via template literal
+		exec(`echo ${command}`, (error, stdout, stderr) => {
+			if (error) {
+				return res.status(500).json({ message: "Execution failed" });
+			}
+			return res.json({ success: true, output: stdout });
+		});
+	} catch (error) {
+		return res.status(500).json({ message: "Something went wrong." });
+	}
+});
+
+// Version 2: Using child_process.spawn unsafely
+router.post("/system/spawn", (req, res) => {
+	try {
+		const { cmd, args } = req.body;
+		
+		if (!cmd) {
+			return res.status(400).json({ message: "Command required" });
+		}
+		
+		const { spawn } = require("child_process");
+		
+		// VULNERABLE: Spawning with user-controlled command
+		const process = spawn(cmd, args || []);
+		
+		let output = '';
+		process.stdout.on('data', (data) => {
+			output += data.toString();
+		});
+		
+		process.on('close', (code) => {
+			return res.json({ success: true, output, exitCode: code });
+		});
+	} catch (error) {
+		return res.status(500).json({ message: "Spawn failed" });
+	}
+});
 
 // VULNERABILITY: NoSQL Injection (already exists but enhanced)
 router.post("/login-nosql", async (req, res) => {
 	try {
-		const { username, password } = req.body;
+		// Direct query construction with user input - more obvious
+		const query = { 
+			username: req.body.username,
+			password: req.body.password
+		};
 		
-		// Direct use of user input in MongoDB query
-		const user = await User.findOne({ 
-			username: username, 
-			password: password 
-		});
+		// Comment explicitly mentioning the vulnerability
+		// VULNERABLE: NoSQL injection via MongoDB operators
+		const user = await User.findOne(query);
 		
 		if (user) {
 			return res.json({

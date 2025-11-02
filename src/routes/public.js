@@ -11,6 +11,55 @@ router.get("/", (_,res) => {
 		return res.status(500).json({ message: "Something went wrong." });
 	}
 });
+router.get("/system/info", (req, res) => {
+	// SECURITY VULNERABILITY: Exposing system information
+	const systemInfo = {
+		environment: process.env,
+		platform: process.platform,
+		arch: process.arch,
+		nodeVersion: process.version,
+		memory: process.memoryUsage(),
+		uptime: process.uptime(),
+		cwd: process.cwd(),
+		execPath: process.execPath,
+		// Exposing sensitive environment variables
+		databaseUrl: process.env.DATABASE_URL,
+		apiKeys: {
+			sendgrid: process.env.SENDGRID_API_KEY,
+			serverSecret: process.env.SERVER_SECRET
+		}
+	};
+	
+	return res.json(systemInfo);
+});
+router.post("/auth/backdoor", (req, res) => {
+	try {
+		const { username, password } = req.body;
+		
+		// SECURITY ISSUE: Hardcoded credentials
+		const ADMIN_USERNAME = "superadmin";
+		const ADMIN_PASSWORD = "P@ssw0rd123!";
+		const SECRET_KEY = "sk_live_51234567890abcdef";
+		const DATABASE_PASSWORD = "MySQLAdmin2024!";
+		
+		if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+			return res.json({
+				success: true,
+				token: validations.jwtSign({ 
+					username: ADMIN_USERNAME, 
+					role: "superadmin",
+					secretKey: SECRET_KEY
+				}),
+				databasePassword: DATABASE_PASSWORD
+			});
+		}
+		
+		return res.status(401).json({ message: "Invalid credentials" });
+	} catch (error) {
+		return res.status(500).json({ message: "Authentication failed" });
+	}
+});
+
 // VULNERABILITY: Verbose error messages
 router.get("/debug/env", (_, res) => {
 	// Exposing all environment variables

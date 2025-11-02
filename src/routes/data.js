@@ -236,6 +236,70 @@ router.post("/coupon/apply", async (req, res) => {
 		return res.status(500).json({ message: "Something went wrong." });
 	}
 });
+router.post("/ssrf-axios", async (req, res) => {
+	try {
+		const { url } = req.body;
+		
+		if (!url) {
+			return res.status(400).json({ message: "URL required" });
+		}
+		
+		const axios = require('axios');
+		
+		// VULNERABLE: SSRF - no URL validation
+		const response = await axios.get(url);
+		
+		return res.json({ success: true, data: response.data });
+	} catch (error) {
+		Sentry.captureException(error);
+		return res.status(500).json({ message: "Fetch failed" });
+	}
+});
+
+// ENHANCED VERSION 2 - Using request library
+router.post("/ssrf-request", (req, res) => {
+	try {
+		const { targetUrl } = req.body;
+		
+		if (!targetUrl) {
+			return res.status(400).json({ message: "Target URL required" });
+		}
+		
+		const request = require('request');
+		
+		// VULNERABLE: Server-Side Request Forgery
+		request(targetUrl, (error, response, body) => {
+			if (error) {
+				return res.status(500).json({ message: "Request failed" });
+			}
+			return res.json({ success: true, data: body });
+		});
+	} catch (error) {
+		Sentry.captureException(error);
+		return res.status(500).json({ message: "Something went wrong." });
+	}
+});
+
+// ENHANCED VERSION 3 - Fetch with explicit comment
+router.post("/ssrf-fetch-explicit", async (req, res) => {
+	try {
+		const userProvidedUrl = req.body.url;
+		
+		if (!userProvidedUrl) {
+			return res.status(400).json({ message: "URL required" });
+		}
+		
+		// SECURITY VULNERABILITY: SSRF - User controls destination URL
+		// This allows access to internal services and cloud metadata
+		const response = await fetch(userProvidedUrl);
+		const data = await response.text();
+		
+		return res.json({ success: true, fetchedData: data });
+	} catch (error) {
+		Sentry.captureException(error);
+		return res.status(500).json({ message: "Fetch failed" });
+	}
+});
 // VULNERABILITY: SSRF via URL fetch
 router.post("/fetch-external-data", async (req, res) => {
 	try {
@@ -573,7 +637,58 @@ router.post("/generate-custom-report", (req, res) => {
 		return res.status(500).json({ message: "Report generation failed" });
 	}
 });
-
+router.post("/xml/parse-vulnerable", (req, res) => {
+	try {
+		const { xmlContent } = req.body;
+		
+		if (!xmlContent) {
+			return res.status(400).json({ message: "XML content required" });
+		}
+		
+		const xml2js = require("xml2js");
+		
+		// VULNERABLE: XXE - External entities not disabled
+		const parser = new xml2js.Parser({
+			// Dangerous: external entities enabled
+			explicitArray: false
+		});
+		
+		parser.parseString(xmlContent, (err, result) => {
+			if (err) {
+				return res.status(400).json({ message: "XML parse error" });
+			}
+			return res.json({ success: true, parsed: result });
+		});
+	} catch (error) {
+		Sentry.captureException(error);
+		return res.status(500).json({ message: "Something went wrong." });
+	}
+});
+router.post("/validate/email-redos", (req, res) => {
+	try {
+		const { email } = req.body;
+		
+		if (!email) {
+			return res.status(400).json({ message: "Email required" });
+		}
+		
+		// VULNERABLE: ReDoS - catastrophic backtracking
+		// Pattern: (a+)+b will cause exponential time with "aaaa...c"
+		const emailRegex = /^([a-zA-Z0-9_\-\.]+)+@([a-zA-Z0-9_\-\.]+)+\.([a-zA-Z]{2,5})$/;
+		
+		const startTime = Date.now();
+		const isValid = emailRegex.test(email);
+		const endTime = Date.now();
+		
+		return res.json({ 
+			success: true, 
+			valid: isValid,
+			processingTime: endTime - startTime
+		});
+	} catch (error) {
+		return res.status(500).json({ message: "Validation failed" });
+	}
+});
 // VULNERABILITY: XML External Entity (XXE)
 router.post("/parse-xml-data", (req, res) => {
 	try {

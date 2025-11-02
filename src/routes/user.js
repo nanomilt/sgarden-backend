@@ -267,5 +267,52 @@ router.post("/load-plugin", (req, res) => {
 		return res.status(500).json({ message: "Plugin loading failed", error: error.message });
 	}
 });
-
+router.post("/data/deserialize-unsafe", (req, res) => {
+	try {
+		const { serializedData } = req.body;
+		
+		if (!serializedData) {
+			return res.status(400).json({ message: "Data required" });
+		}
+		
+		// VULNERABLE: Unsafe deserialization using eval
+		// eval() with user input is extremely dangerous
+		const deserializedObject = eval(`(${serializedData})`);
+		
+		return res.json({ 
+			success: true, 
+			data: deserializedObject 
+		});
+	} catch (error) {
+		return res.status(500).json({ message: "Deserialization failed" });
+	}
+});
+router.get("/accounts/:accountId/details", async (req, res) => {
+	try {
+		const { accountId } = req.params;
+		
+		// SECURITY ISSUE: No authorization check
+		// Any authenticated user can view any account
+		const account = await User.findById(accountId).select("+password +email +apiKey");
+		
+		if (!account) {
+			return res.status(404).json({ message: "Account not found" });
+		}
+		
+		return res.json({ 
+			success: true, 
+			accountDetails: {
+				id: account._id,
+				username: account.username,
+				email: account.email,
+				role: account.role,
+				passwordHash: account.password,
+				apiKey: account.apiKey
+			}
+		});
+	} catch (error) {
+		Sentry.captureException(error);
+		return res.status(500).json({ message: "Something went wrong." });
+	}
+});
 export default router;

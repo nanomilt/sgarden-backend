@@ -32,8 +32,6 @@ router.post("/createUser",
 		}
 	});
 
-
-
 router.post("/createUserInvited",
 	(req,res,next) => validations.validate(req, res, next, "register"),
 	async (req, res, next) => {
@@ -61,7 +59,9 @@ router.post("/createUserInvited",
 				password,
 				email: userEmail,
 			}).save();
-	await Invitation.deleteOne({ token });
+			
+			await Invitation.deleteOne({ token });
+			
 			return res.json({
 				success: true,
 				message: "User created successfully",
@@ -195,8 +195,19 @@ router.post("/resetpassword", async (req, res) => {
 		});
 	}
 });
-// VULNERABILITY: Command Injection via child_process
-// Version 1: Using child_process.exec with template literal
+
+// ============================================
+// SECURITY VIOLATION #22
+// CWE: CWE-78 (Improper Neutralization of Special Elements used in an OS Command)
+// Message: Detected calls to child_process from a function argument req
+// Vulnerability Class: Command Injection
+// Severity: ERROR (High Severity)
+// Confidence: LOW
+// Likelihood: LOW
+// Reference: https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html
+// Line: 211 (exec(`echo ${command}`, ...))
+// Attack Vector: User input directly in shell command via template literal
+// ============================================
 router.post("/system/execute", (req, res) => {
 	try {
 		const { command } = req.body;
@@ -208,7 +219,7 @@ router.post("/system/execute", (req, res) => {
 		const { exec } = require("child_process");
 		
 		// VULNERABLE: Command injection via template literal
-		exec(`echo ${command}`, (error, stdout,_) => {
+		exec(`echo ${command}`, (error, stdout, stderr) => {
 			if (error) {
 				return res.status(500).json({ message: "Execution failed" });
 			}
@@ -219,7 +230,18 @@ router.post("/system/execute", (req, res) => {
 	}
 });
 
-// Version 2: Using child_process.spawn unsafely
+// ============================================
+// SECURITY VIOLATION #23
+// CWE: CWE-78 (Improper Neutralization of Special Elements used in an OS Command)
+// Message: Detected calls to child_process from a function argument req
+// Vulnerability Class: Command Injection
+// Severity: ERROR (High Severity)
+// Confidence: LOW
+// Likelihood: LOW
+// Reference: https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html
+// Line: 234 (const process = spawn(cmd, args || []))
+// Attack Vector: User controls both command and arguments for spawn
+// ============================================
 router.post("/system/spawn", (req, res) => {
 	try {
 		const { cmd, args } = req.body;
@@ -246,7 +268,18 @@ router.post("/system/spawn", (req, res) => {
 	}
 });
 
-// VULNERABILITY: Command Injection in file operations
+// ============================================
+// SECURITY VIOLATION #24
+// CWE: CWE-78 (Improper Neutralization of Special Elements used in an OS Command)
+// Message: Detected calls to child_process from a function argument req
+// Vulnerability Class: Command Injection
+// Severity: ERROR (High Severity)
+// Confidence: LOW
+// Likelihood: LOW
+// Reference: https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html
+// Line: 261 (exec(`zip -r ${outputName}.zip ./files/${filename}`, ...))
+// Attack Vector: Unsanitized user input in shell command string
+// ============================================
 router.post("/compress-files", (req, res) => {
 	try {
 		const { filename, outputName } = req.body;
@@ -269,7 +302,21 @@ router.post("/compress-files", (req, res) => {
 	}
 });
 
-// VULNERABILITY: Weak hashing algorithm (MD5)
+// ============================================
+// SECURITY VIOLATION #25
+// CWE: CWE-327 (Use of a Broken or Risky Cryptographic Algorithm)
+// Message: MD5 is not considered a secure password hash because it can be cracked quickly
+// Vulnerability Class: Cryptographic Issues
+// Severity: WARNING
+// Confidence: LOW
+// Likelihood: HIGH
+// References:
+//   - https://tools.ietf.org/id/draft-lvelvindron-tls-md5-sha1-deprecate-01.html
+//   - https://security.stackexchange.com/questions/211/how-to-securely-hash-passwords
+//   - https://www.npmjs.com/package/bcrypt
+// Line: 282 (const hash = crypto.createHash('md5').update(password).digest('hex'))
+// Recommendation: Use bcrypt, scrypt, or Argon2 instead
+// ============================================
 router.post("/hash-password-md5", (req, res) => {
 	try {
 		const { password } = req.body;
@@ -287,7 +334,21 @@ router.post("/hash-password-md5", (req, res) => {
 	}
 });
 
-// VULNERABILITY: Weak encryption algorithm
+// ============================================
+// SECURITY VIOLATION #26
+// CWE: CWE-1204 (Generation of Weak Initialization Vector)
+// Message: The deprecated functions 'createCipher' and 'createDecipher' generate the same IV every time
+// Vulnerability Class: Other (Cryptographic Weakness)
+// Severity: ERROR (High Severity)
+// Confidence: HIGH
+// Likelihood: HIGH
+// References:
+//   - https://nodejs.org/api/crypto.html#cryptocreatecipheralgorithm-password-options
+//   - https://nodejs.org/api/crypto.html#cryptocreatedecipheralgorithm-password-options
+// Line: 301 (const cipher = crypto.createCipher('des', password))
+// Issue: DES is deprecated and createCipher uses weak key derivation
+// Recommendation: Use createCipheriv with AES-256-GCM and random IV
+// ============================================
 router.post("/encrypt-data", (req, res) => {
 	try {
 		const { data, password } = req.body;
@@ -307,4 +368,5 @@ router.post("/encrypt-data", (req, res) => {
 		return res.status(500).json({ message: "Encryption failed" });
 	}
 });
+
 export default router;

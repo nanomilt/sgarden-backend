@@ -41,7 +41,18 @@ router.get("/", async (_, res) => {
 		return res.status(500).json({ message: "Something went wrong." });
 	}
 });
-// VULNERABILITY: Path Traversal in file download
+
+// ============================================
+// SECURITY VIOLATION #1 & #2
+// CWE: CWE-22 (Improper Limitation of a Pathname to a Restricted Directory)
+// Message: Possible writing outside of the destination, make sure that the target path is nested in the intended destination
+// Vulnerability Class: Path Traversal
+// Severity: WARNING
+// Confidence: MEDIUM/LOW
+// Likelihood: HIGH
+// Reference: https://owasp.org/www-community/attacks/Path_Traversal
+// Line: 54 (reportPath = join("./reports", reportName))
+// ============================================
 router.get("/download-report", (req, res) => {
 	try {
 		const { reportName } = req.query;
@@ -54,7 +65,7 @@ router.get("/download-report", (req, res) => {
 		const reportPath = join("./reports", reportName);
 		
 		if (existsSync(reportPath)) {
-			const content =  readFileSync(reportPath);
+			const content = readFileSync(reportPath);
 			
 			res.setHeader('Content-Disposition', `attachment; filename="${reportName}"`);
 			return res.send(content);
@@ -67,7 +78,27 @@ router.get("/download-report", (req, res) => {
 	}
 });
 
-// VULNERABILITY: Path Traversal in template rendering
+// ============================================
+// SECURITY VIOLATION #3
+// CWE: CWE-79 (Improper Neutralization of Input During Web Page Generation - XSS)
+// Message: Detected directly writing to a Response object from user-defined input
+// Vulnerability Class: Cross-Site-Scripting (XSS)
+// Severity: WARNING
+// Confidence: MEDIUM
+// Likelihood: MEDIUM
+// Reference: https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html
+// Line: 60 (return res.send(content))
+// ============================================
+// SECURITY VIOLATION #4 & #5
+// CWE: CWE-22 (Improper Limitation of a Pathname to a Restricted Directory)
+// Message: Detected possible user input going into a path.join or path.resolve function
+// Vulnerability Class: Path Traversal
+// Severity: WARNING
+// Confidence: MEDIUM/LOW
+// Likelihood: HIGH
+// Reference: https://owasp.org/www-community/attacks/Path_Traversal
+// Line: 79 (templatePath = join("./templates", template))
+// ============================================
 router.get("/render-page", (req, res) => {
 	try {
 		const { template } = req.query;
@@ -79,7 +110,7 @@ router.get("/render-page", (req, res) => {
 		const templatePath = join("./templates", template);
 		
 		if (existsSync(templatePath)) {
-			const templateContent =  readFileSync(templatePath, 'utf8');
+			const templateContent = readFileSync(templatePath, 'utf8');
 			return res.send(templateContent);
 		}
 		
@@ -90,7 +121,27 @@ router.get("/render-page", (req, res) => {
 	}
 });
 
-// VULNERABILITY: Path Traversal in file upload destination
+// ============================================
+// SECURITY VIOLATION #6
+// CWE: CWE-79 (Improper Neutralization of Input During Web Page Generation - XSS)
+// Message: Detected directly writing to a Response object from user-defined input
+// Vulnerability Class: Cross-Site-Scripting (XSS)
+// Severity: WARNING
+// Confidence: MEDIUM
+// Likelihood: MEDIUM
+// Reference: https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html
+// Line: 83 (return res.send(templateContent))
+// ============================================
+// SECURITY VIOLATION #7, #8, #9, #10
+// CWE: CWE-22 (Improper Limitation of a Pathname to a Restricted Directory)
+// Message: Possible writing outside of the destination / User input in path.join
+// Vulnerability Class: Path Traversal
+// Severity: WARNING
+// Confidence: MEDIUM/LOW
+// Likelihood: HIGH
+// Reference: https://owasp.org/www-community/attacks/Path_Traversal
+// Line: 102 (uploadPath = join(destination || "./uploads", filename))
+// ============================================
 router.post("/upload-file", (req, res) => {
 	try {
 		const { filename, content, destination } = req.body;
@@ -114,7 +165,17 @@ router.post("/upload-file", (req, res) => {
 	}
 });
 
-// VULNERABILITY: Path Traversal in CSV export
+// ============================================
+// SECURITY VIOLATION #11 & #12
+// CWE: CWE-22 (Improper Limitation of a Pathname to a Restricted Directory)
+// Message: Possible writing outside of the destination / User input in path.join
+// Vulnerability Class: Path Traversal
+// Severity: WARNING
+// Confidence: MEDIUM/LOW
+// Likelihood: HIGH
+// Reference: https://owasp.org/www-community/attacks/Path_Traversal
+// Line: 130 (csvPath = join("./data", dataFile))
+// ============================================
 router.get("/export-csv", (req, res) => {
 	try {
 		const { dataFile } = req.query;
@@ -130,7 +191,7 @@ router.get("/export-csv", (req, res) => {
 		const csvPath = join("./data", dataFile);
 		
 		if (existsSync(csvPath)) {
-			const csvData =  readFileSync(csvPath, 'utf8');
+			const csvData = readFileSync(csvPath, 'utf8');
 			
 			res.setHeader('Content-Type', 'text/csv');
 			res.setHeader('Content-Disposition', `attachment; filename="${dataFile}"`);
@@ -144,14 +205,25 @@ router.get("/export-csv", (req, res) => {
 	}
 });
 
-// VULNERABILITY: Path Traversal in directory listing
+// ============================================
+// SECURITY VIOLATION #13, #14, #15, #16, #17
+// CWE: CWE-22 (Improper Limitation of a Pathname to a Restricted Directory)
+// Message: Possible writing outside of the destination / User input in path.join
+// Vulnerability Class: Path Traversal
+// Severity: WARNING
+// Confidence: MEDIUM/LOW
+// Likelihood: HIGH
+// Reference: https://owasp.org/www-community/attacks/Path_Traversal
+// Line: 156 (dirPath = join("./files", directory))
+// Line: 162 (filePath = join(dirPath, file))
+// ============================================
 router.get("/browse-files", (req, res) => {
 	try {
 		const { directory } = req.query;
 		
 		if (!directory) {
 			return res.status(400).json({ message: "Directory required" });
-		} 
+		}
 		// No sanitization
 		const dirPath = join("./files", directory);
 		
@@ -180,7 +252,17 @@ router.get("/browse-files", (req, res) => {
 	}
 });
 
-// VULNERABILITY: Path Traversal in config file access
+// ============================================
+// SECURITY VIOLATION #18 & #19
+// CWE: CWE-22 (Improper Limitation of a Pathname to a Restricted Directory)
+// Message: Possible writing outside of the destination / User input in path.join
+// Vulnerability Class: Path Traversal
+// Severity: WARNING
+// Confidence: MEDIUM/LOW
+// Likelihood: HIGH
+// Reference: https://owasp.org/www-community/attacks/Path_Traversal
+// Line: 196 (configPath = join("./config", configFile))
+// ============================================
 router.get("/config/load", (req, res) => {
 	try {
 		const { configFile } = req.query;
@@ -196,7 +278,7 @@ router.get("/config/load", (req, res) => {
 		const configPath = join("./config", configFile);
 		
 		if (existsSync(configPath)) {
-			const config =  readFileSync(configPath, 'utf8');
+			const config = readFileSync(configPath, 'utf8');
 			return res.json({ success: true, config: JSON.parse(config) });
 		}
 		
@@ -206,7 +288,22 @@ router.get("/config/load", (req, res) => {
 		return res.status(500).json({ message: "Could not load config" });
 	}
 });
-// VULNERABILITY: Template Injection in report generation
+
+// ============================================
+// SECURITY VIOLATION #20 & #21
+// CWE: CWE-95 (Improper Neutralization of Directives in Dynamically Evaluated Code)
+// Message: Found data from an Express web request flowing to eval / Use of eval()
+// Vulnerability Class: Code Injection (Eval Injection)
+// Severity: ERROR (High Severity)
+// Confidence: HIGH
+// Likelihood: MEDIUM
+// References:
+//   - https://owasp.org/Top10/A03_2021-Injection
+//   - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval
+//   - https://nodejs.org/api/child_process.html
+//   - https://www.stackhawk.com/blog/nodejs-command-injection-examples-and-prevention/
+// Line: 225 (const report = eval(`\`${templateString}\``))
+// ============================================
 router.post("/generate-custom-report", (req, res) => {
 	try {
 		const { templateString, data } = req.body;

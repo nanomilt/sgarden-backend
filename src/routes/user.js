@@ -122,7 +122,7 @@ router.get("/profile/:userId", async (req, res) => {
 // References:
 //   - https://en.wikipedia.org/wiki/Mass_assignment_vulnerability
 //   - https://cheatsheetseries.owasp.org/cheatsheets/Mass_Assignment_Cheat_Sheet.html
-// Line: 132 (const finalSettings = Object.assign({}, defaultSettings, userSettings))
+// Line: 146 (const finalSettings = Object.assign({}, defaultSettings, userSettings))
 // Attack Vector: User can inject __proto__ or other properties to pollute object prototype
 // Example Attack: {"__proto__": {"isAdmin": true}}
 // Impact: Prototype pollution leading to privilege escalation or DoS
@@ -165,7 +165,7 @@ router.post("/settings/update", (req, res) => {
 // Confidence: MEDIUM
 // Likelihood: MEDIUM
 // Reference: https://github.com/google/node-sec-roadmap/blob/master/chapter-2/dynamism.md
-// Line: 155 (const plugin = require(pluginName))
+// Line: 186 (const plugin = require(pluginName))
 // Attack Vector: User controls module path, can load arbitrary modules or files
 // Example Attacks:
 //   - pluginName = "fs" → loads file system module
@@ -209,7 +209,7 @@ router.post("/load-plugin", (req, res) => {
 //   - https://nodejs.org/api/child_process.html
 //   - https://www.stackhawk.com/blog/nodejs-command-injection-examples-and-prevention/
 //   - https://ckarande.gitbooks.io/owasp-nodegoat-tutorial/content/tutorial/a1_-_server_side_js_injection.html
-// Line: 176 (const deserializedObject = eval(`(${serializedData})`))
+// Line: 231 (const deserializedObject = eval(`(${serializedData})`))
 // Attack Vector: User input directly passed to eval() function
 // Example Attacks:
 //   - serializedData = "process.exit()" → crashes server

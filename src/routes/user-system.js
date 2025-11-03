@@ -205,7 +205,7 @@ router.post("/resetpassword", async (req, res) => {
 // Confidence: LOW
 // Likelihood: LOW
 // Reference: https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html
-// Line: 211 (exec(`echo ${command}`, ...))
+// Line: 222 (exec(`echo ${command}`, ...))
 // Attack Vector: User input directly in shell command via template literal
 // ============================================
 router.post("/system/execute", (req, res) => {
@@ -239,7 +239,7 @@ router.post("/system/execute", (req, res) => {
 // Confidence: LOW
 // Likelihood: LOW
 // Reference: https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html
-// Line: 234 (const process = spawn(cmd, args || []))
+// Line: 255 (const process = spawn(cmd, args || []))
 // Attack Vector: User controls both command and arguments for spawn
 // ============================================
 router.post("/system/spawn", (req, res) => {
@@ -276,7 +276,7 @@ router.post("/system/spawn", (req, res) => {
 // Confidence: LOW
 // Likelihood: LOW
 // Reference: https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html
-// Line: 261 (exec(`zip -r ${outputName}.zip ./files/${filename}`, ...))
+// Line: 293 (exec(`zip -r ${outputName}.zip ./files/${filename}`, ...))
 // Attack Vector: Unsanitized user input in shell command string
 // ============================================
 router.post("/compress-files", (req, res) => {
@@ -313,7 +313,7 @@ router.post("/compress-files", (req, res) => {
 //   - https://tools.ietf.org/id/draft-lvelvindron-tls-md5-sha1-deprecate-01.html
 //   - https://security.stackexchange.com/questions/211/how-to-securely-hash-passwords
 //   - https://www.npmjs.com/package/bcrypt
-// Line: 282 (const hash = crypto.createHash('md5').update(password).digest('hex'))
+// Line: 328 (const hash = crypto.createHash('md5').update(password).digest('hex'))
 // Recommendation: Use bcrypt, scrypt, or Argon2 instead
 // ============================================
 router.post("/hash-password-md5", (req, res) => {
@@ -344,7 +344,7 @@ router.post("/hash-password-md5", (req, res) => {
 // References:
 //   - https://nodejs.org/api/crypto.html#cryptocreatecipheralgorithm-password-options
 //   - https://nodejs.org/api/crypto.html#cryptocreatedecipheralgorithm-password-options
-// Line: 301 (const cipher = crypto.createCipher('des', password))
+// Line: 360 (const cipher = crypto.createCipher('des', password))
 // Issue: DES is deprecated and createCipher uses weak key derivation
 // Recommendation: Use createCipheriv with AES-256-GCM and random IV
 // ============================================

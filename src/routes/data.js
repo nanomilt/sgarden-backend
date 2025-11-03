@@ -51,7 +51,7 @@ router.get("/", async (_, res) => {
 // Confidence: MEDIUM/LOW
 // Likelihood: HIGH
 // Reference: https://owasp.org/www-community/attacks/Path_Traversal
-// Line: 54 (reportPath = join("./reports", reportName))
+// Line: 64 (reportPath = join("./reports", reportName))
 // ============================================
 router.get("/download-report", (req, res) => {
 	try {
@@ -86,7 +86,7 @@ router.get("/download-report", (req, res) => {
 // Confidence: MEDIUM
 // Likelihood: MEDIUM
 // Reference: https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html
-// Line: 60 (return res.send(content))
+// Line: 113(return res.send(content))
 // ============================================
 // SECURITY VIOLATION #4 & #5
 // CWE: CWE-22 (Improper Limitation of a Pathname to a Restricted Directory)
@@ -96,7 +96,7 @@ router.get("/download-report", (req, res) => {
 // Confidence: MEDIUM/LOW
 // Likelihood: HIGH
 // Reference: https://owasp.org/www-community/attacks/Path_Traversal
-// Line: 79 (templatePath = join("./templates", template))
+// Line: 109(templatePath = join("./templates", template))
 // ============================================
 router.get("/render-page", (req, res) => {
 	try {
@@ -129,7 +129,7 @@ router.get("/render-page", (req, res) => {
 // Confidence: MEDIUM
 // Likelihood: MEDIUM
 // Reference: https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html
-// Line: 83 (return res.send(templateContent))
+// Line: 156 (return res.send(templateContent))
 // ============================================
 // SECURITY VIOLATION #7, #8, #9, #10
 // CWE: CWE-22 (Improper Limitation of a Pathname to a Restricted Directory)
@@ -139,7 +139,7 @@ router.get("/render-page", (req, res) => {
 // Confidence: MEDIUM/LOW
 // Likelihood: HIGH
 // Reference: https://owasp.org/www-community/attacks/Path_Traversal
-// Line: 102 (uploadPath = join(destination || "./uploads", filename))
+// Line: 152 (uploadPath = join(destination || "./uploads", filename))
 // ============================================
 router.post("/upload-file", (req, res) => {
 	try {
@@ -173,7 +173,7 @@ router.post("/upload-file", (req, res) => {
 // Confidence: MEDIUM/LOW
 // Likelihood: HIGH
 // Reference: https://owasp.org/www-community/attacks/Path_Traversal
-// Line: 130 (csvPath = join("./data", dataFile))
+// Line: 190 (csvPath = join("./data", dataFile))
 // ============================================
 router.get("/export-csv", (req, res) => {
 	try {
@@ -213,8 +213,8 @@ router.get("/export-csv", (req, res) => {
 // Confidence: MEDIUM/LOW
 // Likelihood: HIGH
 // Reference: https://owasp.org/www-community/attacks/Path_Traversal
-// Line: 156 (dirPath = join("./files", directory))
-// Line: 162 (filePath = join(dirPath, file))
+// Line: 227 (dirPath = join("./files", directory))
+// Line: 233 (filePath = join(dirPath, file))
 // ============================================
 router.get("/browse-files", (req, res) => {
 	try {
@@ -260,7 +260,7 @@ router.get("/browse-files", (req, res) => {
 // Confidence: MEDIUM/LOW
 // Likelihood: HIGH
 // Reference: https://owasp.org/www-community/attacks/Path_Traversal
-// Line: 196 (configPath = join("./config", configFile))
+// Line: 277 (configPath = join("./config", configFile))
 // ============================================
 router.get("/config/load", (req, res) => {
 	try {
@@ -301,7 +301,7 @@ router.get("/config/load", (req, res) => {
 //   - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval
 //   - https://nodejs.org/api/child_process.html
 //   - https://www.stackhawk.com/blog/nodejs-command-injection-examples-and-prevention/
-// Line: 225 (const report = eval(`\`${templateString}\``))
+// Line: 320 (const report = eval(`\`${templateString}\``))
 // ============================================
 router.post("/generate-custom-report", (req, res) => {
 	try {

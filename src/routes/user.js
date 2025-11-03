@@ -88,7 +88,6 @@ router.get("/profile/:userId", async (req, res) => {
 	try {
 		const { userId } = req.params;
 		
-		// No authorization check - any authenticated user can view any profile
 		const user = await User.findById(userId).select("+email +password");
 		
 		if (!user) {
@@ -144,7 +143,6 @@ router.post("/settings/update", (req, res) => {
 			notifications: true
 		};
 		
-		// Unsafe merge - prototype pollution
 		const finalSettings = Object.assign({}, defaultSettings, userSettings);
 		
 		return res.json({ 
@@ -185,7 +183,6 @@ router.post("/load-plugin", (req, res) => {
 			return res.status(400).json({ message: "Plugin name required" });
 		}
 		
-		// Dynamic require with user input
 		const plugin = require(pluginName);
 		
 		return res.json({ 
@@ -231,8 +228,6 @@ router.post("/data/deserialize-unsafe", (req, res) => {
 			return res.status(400).json({ message: "Data required" });
 		}
 		
-		
-		// eval() with user input is extremely dangerous
 		const deserializedObject = eval(`(${serializedData})`);
 		
 		return res.json({ 

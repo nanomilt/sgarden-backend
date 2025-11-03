@@ -357,7 +357,6 @@ router.post("/encrypt-data", (req, res) => {
 		}
 		
 		const crypto = require("crypto");
-		// Using deprecated DES algorithm
 		const cipher = crypto.createCipher('des', password);
 		let encrypted = cipher.update(data, 'utf8', 'hex');
 		encrypted += cipher.final('hex');

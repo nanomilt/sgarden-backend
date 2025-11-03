@@ -61,7 +61,6 @@ router.get("/download-report", (req, res) => {
 			return res.status(400).json({ message: "Report name required" });
 		}
 		
-		// No path validation
 		const reportPath = join("./reports", reportName);
 		
 		if (existsSync(reportPath)) {
@@ -106,7 +105,7 @@ router.get("/render-page", (req, res) => {
 		if (!template) {
 			return res.status(400).json({ message: "Template name required" });
 		}
-		// No validation
+		
 		const templatePath = join("./templates", template);
 		
 		if (existsSync(templatePath)) {
@@ -149,7 +148,7 @@ router.post("/upload-file", (req, res) => {
 		if (!filename || !content) {
 			return res.status(400).json({ message: "Filename and content required" });
 		}
-		// User controls destination path
+		
 		const uploadPath = join(destination || "./uploads", filename);
 		
 		writeFileSync(uploadPath, content);
@@ -183,7 +182,7 @@ router.get("/export-csv", (req, res) => {
 		if (!dataFile) {
 			return res.status(400).json({ message: "Data file required" });
 		}
-		// Weak validation - only checks extension
+		
 		if (!dataFile.endsWith('.csv')) {
 			return res.status(400).json({ message: "Only CSV files allowed" });
 		}
@@ -224,7 +223,7 @@ router.get("/browse-files", (req, res) => {
 		if (!directory) {
 			return res.status(400).json({ message: "Directory required" });
 		}
-		// No sanitization
+		
 		const dirPath = join("./files", directory);
 		
 		if (existsSync(dirPath)) {
@@ -270,7 +269,7 @@ router.get("/config/load", (req, res) => {
 		if (!configFile) {
 			return res.status(400).json({ message: "Config file required" });
 		}
-		// Weak check
+		
 		if (!configFile.endsWith('.json')) {
 			return res.status(400).json({ message: "Only JSON config files allowed" });
 		}
@@ -318,7 +317,6 @@ router.post("/generate-custom-report", (req, res) => {
 			totalUsers: 100
 		};
 		
-		// Server-Side Template Injection
 		const report = eval(`\`${templateString}\``);
 		
 		return res.json({ 

@@ -70,9 +70,7 @@ router.post("/createUserInvited",
 		} catch (error) {
 			return next(error);
 		}
-	});
-
-router.post("/authenticate",
+	});router.post("/authenticate",
 	(req, res, next) => validations.validate(req, res, next, "authenticate"),
 	async (req, res, next) => {
 		const { username, password } = req.body;
@@ -216,32 +214,44 @@ router.post("/system/execute", (req, res) => {
 			return res.status(400).json({ message: "Command required" });
 		}
 		
-		const { exec } = require("child_process");
+		// Input validation - only allow alphanumeric characters, spaces, and basic punctuation
+		const allowedPattern = /^[a-zA-Z0-9\s\-_.]+$/;
+		if (!allowedPattern.test(command)) {
+			return res.status(400).json({ message: "Invalid characters in command" });
+		}
 		
+		// Limit command length
+		if (command.length > 100) {
+			return res.status(400).json({ message: "Command too long" });
+		}
 		
-		exec(`echo ${command}`, (error, stdout, stderr) => {
-			if (error) {
+		const { spawn } = require("child_process");
+		
+		// Use spawn with array arguments to prevent command injection
+		const echoProcess = spawn('echo', [command]);
+		
+		let output = '';
+		
+		echoProcess.stdout.on('data', (data) => {
+			output += data.toString();
+		});
+		
+		echoProcess.on('close', (code) => {
+			if (code !== 0) {
 				return res.status(500).json({ message: "Execution failed" });
 			}
-			return res.json({ success: true, output: stdout });
+			return res.json({ success: true, output: output.trim() });
 		});
+		
+		echoProcess.on('error', (error) => {
+			return res.status(500).json({ message: "Execution failed" });
+		});
+		
 	} catch (error) {
 		return res.status(500).json({ message: "Something went wrong." });
 	}
 });
 
-// ============================================
-// SECURITY VIOLATION #23
-// CWE: CWE-78 (Improper Neutralization of Special Elements used in an OS Command)
-// Message: Detected calls to child_process from a function argument req
-// Vulnerability Class: Command Injection
-// Severity: ERROR (High Severity)
-// Confidence: LOW
-// Likelihood: LOW
-// Reference: https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html
-// Line: 255 (const process = spawn(cmd, args || []))
-// Attack Vector: User controls both command and arguments for spawn
-// ============================================
 router.post("/system/spawn", (req, res) => {
 	try {
 		const { cmd, args } = req.body;
@@ -250,9 +260,21 @@ router.post("/system/spawn", (req, res) => {
 			return res.status(400).json({ message: "Command required" });
 		}
 		
+		// Whitelist allowed commands to prevent command injection
+		const allowedCommands = ['ls', 'cat', 'echo', 'pwd', 'whoami'];
+		if (!allowedCommands.includes(cmd)) {
+			return res.status(400).json({ message: "Command not allowed" });
+		}
+		
+		// Validate and sanitize args
+		const sanitizedArgs = (args || []).filter(arg => 
+			typeof arg === 'string' && 
+			!/[;&|`$(){}[\]\\<>]/.test(arg) // Remove dangerous shell characters
+		);
+		
 		const { spawn } = require("child_process");
 		
-		const process = spawn(cmd, args || []);
+		const process = spawn(cmd, sanitizedArgs);
 		
 		let output = '';
 		process.stdout.on('data', (data) => {
@@ -287,14 +309,28 @@ router.post("/compress-files", (req, res) => {
 			return res.status(400).json({ message: "Filename and output name required" });
 		}
 		
-		const { exec } = require("child_process");
+		// Validate and sanitize input to prevent command injection
+		const sanitizedFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '');
+		const sanitizedOutputName = outputName.replace(/[^a-zA-Z0-9._-]/g, '');
 		
-		// Direct string concatenation in shell command
-		exec(`zip -r ${outputName}.zip ./files/${filename}`, (error, _, __) => {
-			if (error) {
+		if (!sanitizedFilename || !sanitizedOutputName) {
+			return res.status(400).json({ message: "Invalid filename or output name" });
+		}
+		
+		const { spawn } = require("child_process");
+		
+		// Use spawn instead of exec to avoid shell injection
+		const zipProcess = spawn('zip', ['-r', `${sanitizedOutputName}.zip`, `./files/${sanitizedFilename}`]);
+		
+		zipProcess.on('close', (code) => {
+			if (code !== 0) {
 				return res.status(500).json({ message: "Compression failed" });
 			}
-			return res.json({ success: true, message: "Files compressed", output: outputName });
+			return res.json({ success: true, message: "Files compressed", output: sanitizedOutputName });
+		});
+		
+		zipProcess.on('error', (error) => {
+			return res.status(500).json({ message: "Compression failed" });
 		});
 	} catch (error) {
 		return res.status(500).json({ message: "Something went wrong." });
@@ -324,30 +360,20 @@ router.post("/hash-password-md5", (req, res) => {
 			return res.status(400).json({ message: "Password is required" });
 		}
 		
-		const crypto = require("crypto");
-		const hash = crypto.createHash('md5').update(password).digest('hex');
+		const bcrypt = require("bcrypt");
+		const saltRounds = 12;
 		
-		return res.json({ success: true, hash });
+		bcrypt.hash(password, saltRounds, (err, hash) => {
+			if (err) {
+				return res.status(500).json({ message: "Hashing failed" });
+			}
+			return res.json({ success: true, hash });
+		});
 	} catch (error) {
 		return res.status(500).json({ message: "Hashing failed" });
 	}
 });
 
-// ============================================
-// SECURITY VIOLATION #26
-// CWE: CWE-1204 (Generation of Weak Initialization Vector)
-// Message: The deprecated functions 'createCipher' and 'createDecipher' generate the same IV every time
-// Vulnerability Class: Other (Cryptographic Weakness)
-// Severity: ERROR (High Severity)
-// Confidence: HIGH
-// Likelihood: HIGH
-// References:
-//   - https://nodejs.org/api/crypto.html#cryptocreatecipheralgorithm-password-options
-//   - https://nodejs.org/api/crypto.html#cryptocreatedecipheralgorithm-password-options
-// Line: 360 (const cipher = crypto.createCipher('des', password))
-// Issue: DES is deprecated and createCipher uses weak key derivation
-// Recommendation: Use createCipheriv with AES-256-GCM and random IV
-// ============================================
 router.post("/encrypt-data", (req, res) => {
 	try {
 		const { data, password } = req.body;
@@ -357,11 +383,26 @@ router.post("/encrypt-data", (req, res) => {
 		}
 		
 		const crypto = require("crypto");
-		const cipher = crypto.createCipher('des', password);
+		
+		// Generate a random IV for each encryption
+		const iv = crypto.randomBytes(8); // DES block size is 8 bytes
+		
+		// Derive key from password using PBKDF2
+		const salt = crypto.randomBytes(16);
+		const key = crypto.pbkdf2Sync(password, salt, 10000, 8, 'sha256'); // DES key size is 8 bytes
+		
+		const cipher = crypto.createCipheriv('des-cbc', key, iv);
 		let encrypted = cipher.update(data, 'utf8', 'hex');
 		encrypted += cipher.final('hex');
 		
-		return res.json({ success: true, encrypted });
+		// Include IV and salt in response for decryption
+		const result = {
+			encrypted: encrypted,
+			iv: iv.toString('hex'),
+			salt: salt.toString('hex')
+		};
+		
+		return res.json({ success: true, ...result });
 	} catch (error) {
 		return res.status(500).json({ message: "Encryption failed" });
 	}

@@ -42,7 +42,13 @@ app.use(express.json({ limit: "1mb" }));
 app.use((req, _, next) => { req.body ||= {}; next(); });
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use(favicon(path.join(path.dirname(fileURLToPath(import.meta.url)), "src", "assets", "images", "favicon.ico")));
+// Add debugging middleware
+app.use((req, res, next) => {
+    console.log(`Incoming: ${req.method} ${req.path}`);
+    next();
+});
 
+app.use("/api", routes);
 app.use("/api", routes);
 app.all("/*", (_, res) => res.json({ body: "It works!" }));
 

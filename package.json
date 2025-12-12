@@ -45,6 +45,9 @@
     }
   },
   "ava": {
+    "files": [
+      "tests/**/*.test.js"
+    ],
     "timeout": "1m",
     "verbose": true
   },
@@ -57,7 +60,7 @@
     "c8": "^10.1.2",
     "eslint": "^8.34.0",
     "eslint-config-iamnapo": "^28.2.0",
-    "got": "^14.4.3",
+    "got": "^14.6.5",
     "nodemon": "^2.0.20",
     "test-listen": "^1.1.0"
   },

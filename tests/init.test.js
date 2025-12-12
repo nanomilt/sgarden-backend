@@ -1,4 +1,4 @@
- import http from "node:http";
+import http from "node:http";
 
 import test from "ava";
 import got from "got";

@@ -27,3 +27,12 @@ $ npm test
 ```sh
 $ npm run dev
 ```
+
+
+### Update Info:
+
+This repository has been updated after a push event!
+
+### Update Info:
+
+This repository has been updated after a push event!

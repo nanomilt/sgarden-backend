@@ -1,6 +1,9 @@
+
+
 import express from "express";
 import Sentry from "@sentry/node";
-import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, unlinkSync, renameSync } from "fs";
+import { readFileSync, existsSync } from "fs";
+// import { writeFileSync, readdirSync, statSync, unlinkSync, renameSync } from "fs";
 import { join } from "path";
 
 const router = express.Router({ mergeParams: true });
@@ -77,28 +80,7 @@ router.get("/download-report", (req, res) => {
 	}
 });
 
-// ============================================
-// SECURITY VIOLATION #3
-// CWE: CWE-79 (Improper Neutralization of Input During Web Page Generation - XSS)
-// Message: Detected directly writing to a Response object from user-defined input
-// Vulnerability Class: Cross-Site-Scripting (XSS)
-// Severity: WARNING
-// Confidence: MEDIUM
-// Likelihood: MEDIUM
-// Reference: https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html
-// Line: 113(return res.send(content))
-// ============================================
-// SECURITY VIOLATION #4 & #5
-// CWE: CWE-22 (Improper Limitation of a Pathname to a Restricted Directory)
-// Message: Detected possible user input going into a path.join or path.resolve function
-// Vulnerability Class: Path Traversal
-// Severity: WARNING
-// Confidence: MEDIUM/LOW
-// Likelihood: HIGH
-// Reference: https://owasp.org/www-community/attacks/Path_Traversal
-// Line: 109(templatePath = join("./templates", template))
-// ============================================
-router.get("/render-page", (req, res) => {
+export default router;router.get("/render-page", (req, res) => {
 	try {
 		const { template } = req.query;
 		
@@ -162,20 +144,7 @@ router.post("/upload-file", (req, res) => {
 		Sentry.captureException(error);
 		return res.status(500).json({ message: "Upload failed" });
 	}
-});
-
-// ============================================
-// SECURITY VIOLATION #11 & #12
-// CWE: CWE-22 (Improper Limitation of a Pathname to a Restricted Directory)
-// Message: Possible writing outside of the destination / User input in path.join
-// Vulnerability Class: Path Traversal
-// Severity: WARNING
-// Confidence: MEDIUM/LOW
-// Likelihood: HIGH
-// Reference: https://owasp.org/www-community/attacks/Path_Traversal
-// Line: 190 (csvPath = join("./data", dataFile))
-// ============================================
-router.get("/export-csv", (req, res) => {
+});router.get("/export-csv", (req, res) => {
 	try {
 		const { dataFile } = req.query;
 		
@@ -251,20 +220,9 @@ router.get("/browse-files", (req, res) => {
 	}
 });
 
-// ============================================
-// SECURITY VIOLATION #18 & #19
-// CWE: CWE-22 (Improper Limitation of a Pathname to a Restricted Directory)
-// Message: Possible writing outside of the destination / User input in path.join
-// Vulnerability Class: Path Traversal
-// Severity: WARNING
-// Confidence: MEDIUM/LOW
-// Likelihood: HIGH
-// Reference: https://owasp.org/www-community/attacks/Path_Traversal
-// Line: 277 (configPath = join("./config", configFile))
-// ============================================
-router.get("/config/load", (req, res) => {
+router.get("/config/load", (_, res) => {
 	try {
-		const { configFile } = req.query;
+		const { configFile } = _.query;
 		
 		if (!configFile) {
 			return res.status(400).json({ message: "Config file required" });

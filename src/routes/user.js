@@ -112,21 +112,9 @@ router.get("/profile/:userId", async (req, res) => {
 });
 
 // ============================================
-// SECURITY VIOLATION #27
-// CWE: CWE-915 (Improperly Controlled Modification of Dynamically-Determined Object Attributes)
-// Message: User control data in Object.assign can cause mass assignment vulnerability
-// Vulnerability Class: Mass Assignment
-// Severity: WARNING
-// Confidence: LOW
-// Likelihood: LOW
-// References:
-//   - https://en.wikipedia.org/wiki/Mass_assignment_vulnerability
-//   - https://cheatsheetseries.owasp.org/cheatsheets/Mass_Assignment_Cheat_Sheet.html
-// Line: 146 (const finalSettings = Object.assign({}, defaultSettings, userSettings))
-// Attack Vector: User can inject __proto__ or other properties to pollute object prototype
-// Example Attack: {"__proto__": {"isAdmin": true}}
-// Impact: Prototype pollution leading to privilege escalation or DoS
-// Recommendation: Use Object.create(null) or validate keys explicitly
+// FIXED: Mass Assignment Vulnerability (CWE-915)
+// Solution: Explicitly whitelist allowed properties instead of using Object.assign with user input
+// This prevents prototype pollution and injection of unauthorized properties
 // ============================================
 router.post("/settings/update", (req, res) => {
 	try {
@@ -143,7 +131,15 @@ router.post("/settings/update", (req, res) => {
 			notifications: true
 		};
 		
-		const finalSettings = Object.assign({}, defaultSettings, userSettings);
+		// Whitelist allowed properties to prevent mass assignment and prototype pollution
+		const allowedKeys = ["theme", "language", "notifications"];
+		const finalSettings = { ...defaultSettings };
+		
+		for (const key of allowedKeys) {
+			if (userSettings.hasOwnProperty(key)) {
+				finalSettings[key] = userSettings[key];
+			}
+		}
 		
 		return res.json({ 
 			success: true, 
@@ -157,23 +153,9 @@ router.post("/settings/update", (req, res) => {
 });
 
 // ============================================
-// SECURITY VIOLATION #28
-// CWE: CWE-706 (Use of Incorrectly-Resolved Name or Reference)
-// Message: If an attacker controls the x in require(x) then they can cause code to load
-// Vulnerability Class: Improper Authorization (Code Injection)
-// Severity: ERROR (High Severity)
-// Confidence: MEDIUM
-// Likelihood: MEDIUM
-// Reference: https://github.com/google/node-sec-roadmap/blob/master/chapter-2/dynamism.md
-// Line: 186 (const plugin = require(pluginName))
-// Attack Vector: User controls module path, can load arbitrary modules or files
-// Example Attacks:
-//   - pluginName = "fs" → loads file system module
-//   - pluginName = "child_process" → loads process execution module
-//   - pluginName = "/etc/passwd" → attempts to load arbitrary file
-//   - pluginName = "../../../../../../etc/passwd" → path traversal
-// Impact: Arbitrary code execution, file system access, information disclosure
-// Recommendation: Use allowlist of permitted modules or disable dynamic requires
+// FIXED: Dynamic Require Vulnerability (CWE-706)
+// Solution: Use allowlist of permitted plugins instead of dynamic require with user input
+// This prevents arbitrary code execution and unauthorized module loading
 // ============================================
 router.post("/load-plugin", (req, res) => {
 	try {
@@ -183,42 +165,42 @@ router.post("/load-plugin", (req, res) => {
 			return res.status(400).json({ message: "Plugin name required" });
 		}
 		
-		const plugin = require(pluginName);
+		// Whitelist of allowed plugins
+		const allowedPlugins = {
+			"analytics": () => import("./plugins/analytics.js"),
+			"reporting": () => import("./plugins/reporting.js"),
+			"notifications": () => import("./plugins/notifications.js")
+		};
 		
-		return res.json({ 
-			success: true, 
-			plugin: plugin.toString(),
-			message: "Plugin loaded"
-		});
+		if (!allowedPlugins[pluginName]) {
+			return res.status(400).json({ 
+				message: "Invalid plugin name",
+				allowedPlugins: Object.keys(allowedPlugins)
+			});
+		}
+		
+		// Load only from allowlist
+		allowedPlugins[pluginName]()
+			.then(plugin => {
+				return res.json({ 
+					success: true, 
+					plugin: pluginName,
+					message: "Plugin loaded"
+				});
+			})
+			.catch(error => {
+				return res.status(500).json({ message: "Plugin loading failed", error: error.message });
+			});
+		
 	} catch (error) {
 		return res.status(500).json({ message: "Plugin loading failed", error: error.message });
 	}
 });
 
 // ============================================
-// SECURITY VIOLATION #29 & #30
-// CWE: CWE-95 (Improper Neutralization of Directives in Dynamically Evaluated Code)
-// Message: Found data from an Express web request flowing to eval / Use of eval()
-// Vulnerability Class: Code Injection (Eval Injection)
-// Severity: ERROR (CRITICAL - High Severity)
-// Confidence: HIGH
-// Likelihood: MEDIUM
-// References:
-//   - https://owasp.org/Top10/A03_2021-Injection
-//   - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval
-//   - https://nodejs.org/api/child_process.html
-//   - https://www.stackhawk.com/blog/nodejs-command-injection-examples-and-prevention/
-//   - https://ckarande.gitbooks.io/owasp-nodegoat-tutorial/content/tutorial/a1_-_server_side_js_injection.html
-// Line: 231 (const deserializedObject = eval(`(${serializedData})`))
-// Attack Vector: User input directly passed to eval() function
-// Example Attacks:
-//   - serializedData = "process.exit()" → crashes server
-//   - serializedData = "require('child_process').execSync('rm -rf /')" → deletes files
-//   - serializedData = "require('fs').readFileSync('/etc/passwd', 'utf8')" → reads sensitive files
-//   - serializedData = "global.isAdmin = true" → modifies global state
-// Impact: Remote Code Execution (RCE), complete server compromise, data theft, DoS
-// CRITICAL: This is one of the most dangerous vulnerabilities - NEVER use eval() with user input
-// Recommendation: Use JSON.parse() for data, avoid eval() entirely, implement input validation
+// FIXED: Eval Injection Vulnerability (CWE-95)
+// Solution: Use JSON.parse() instead of eval() for deserialization
+// This prevents arbitrary code execution while maintaining data parsing functionality
 // ============================================
 router.post("/data/deserialize-unsafe", (req, res) => {
 	try {
@@ -228,14 +210,15 @@ router.post("/data/deserialize-unsafe", (req, res) => {
 			return res.status(400).json({ message: "Data required" });
 		}
 		
-		const deserializedObject = eval(`(${serializedData})`);
+		// Use JSON.parse instead of eval to prevent code injection
+		const deserializedObject = JSON.parse(serializedData);
 		
 		return res.json({ 
 			success: true, 
 			data: deserializedObject 
 		});
 	} catch (error) {
-		return res.status(500).json({ message: "Deserialization failed" });
+		return res.status(500).json({ message: "Deserialization failed: Invalid JSON" });
 	}
 });
 
